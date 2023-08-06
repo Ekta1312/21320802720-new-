@@ -12,19 +12,31 @@ const PORT = process.env.PORT || 5000;
 const API_BASE_URL = 'http://20.244.56.144/train';
 
 const companies = [];
+const defaultCompanyName = 'Ekta_Bansal';
+const defaultOwnerName = 'Ekta';
+const defaultRollNo = '21320802720';
+const defaultOwnerEmail = 'ektaaggarwal.bansal@gmail.com';
+const defaultAccessCode = 'sAzlpA';
 
 app.use(bodyParser.json());
 
+
 app.post('/register', async (req, res) => {
   try {
-    const { companyName, ownerName, rollNo, ownerEmail, accessCode } = req.body;
+    const {
+      companyName = defaultCompanyName,
+      ownerName = defaultOwnerName,
+      rollNo = defaultRollNo,
+      ownerEmail = defaultOwnerEmail,
+      accessCode = defaultAccessCode,
+    } = req.body;
 
     const response = await axios.post(`${API_BASE_URL}/register`, {
-        companyName:"Ekta_Bansal",
-        ownerName: "Ekta",
-        rollNo:"21320802720",
-        ownerEmail:"ektaaggarwal.bansal@gmail.com",
-        accessCode: "sAzlpa",
+      companyName,
+      ownerName,
+      rollNo,
+      ownerEmail,
+      accessCode,
     });
 
     const { clientID, clientSecret } = response.data;
@@ -33,6 +45,7 @@ app.post('/register', async (req, res) => {
       companyName,
       clientID,
       clientSecret,
+      accessCode: '', 
     });
 
     res.status(200).json({
@@ -77,6 +90,22 @@ app.post('/authenticate', async (req, res) => {
     res.status(500).json({ error: 'Authentication failed' });
   }
 });
+
+app.get('/access-token', async (req, res) => {
+  try {
+    const company = companies.find((c) => c.access_token);
+    if (!company) {
+      return res.status(404).json({ error: 'Access token not available' });
+    }
+
+    res.status(200).json({ access_token: company.access_token });
+  } catch (error) {
+    console.error('Error fetching access code:', error.message);
+    res.status(500).json({ error: 'Failed to fetch access code' });
+  }
+});
+
+
 
 app.get('/trains', async (req, res) => {
   try {
