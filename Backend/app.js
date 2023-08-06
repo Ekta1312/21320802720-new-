@@ -20,11 +20,11 @@ app.post('/register', async (req, res) => {
     const { companyName, ownerName, rollNo, ownerEmail, accessCode } = req.body;
 
     const response = await axios.post(`${API_BASE_URL}/register`, {
-      companyName,
-      ownerName,
-      rollNo,
-      ownerEmail,
-      accessCode,
+        companyName:"Ekta_Bansal",
+        ownerName: "Ekta",
+        rollNo:"21320802720",
+        ownerEmail:"ektaaggarwal.bansal@gmail.com",
+        accessCode: "sAzlpa",
     });
 
     const { clientID, clientSecret } = response.data;
