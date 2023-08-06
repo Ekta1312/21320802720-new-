@@ -11,17 +11,14 @@ const PORT = process.env.PORT || 5000;
 
 const API_BASE_URL = 'http://20.244.56.144/train';
 
-//Array company data aur access token store krne k lie
 const companies = [];
 
 app.use(bodyParser.json());
 
-// API endpoint- register kia company ko
 app.post('/register', async (req, res) => {
   try {
     const { companyName, ownerName, rollNo, ownerEmail, accessCode } = req.body;
 
-    // Post req gayi server se main API ko
     const response = await axios.post(`${API_BASE_URL}/register`, {
       companyName,
       ownerName,
@@ -32,7 +29,6 @@ app.post('/register', async (req, res) => {
 
     const { clientID, clientSecret } = response.data;
 
-    // save krlia company array mein
     companies.push({
       companyName,
       clientID,
@@ -50,12 +46,10 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// API endpoint auth k lie
 app.post('/authenticate', async (req, res) => {
   try {
     const { companyName, clientID, clientSecret } = req.body;
 
-    // Find the company in the database
     const company = companies.find(
       (c) => c.companyName === companyName && c.clientID === clientID && c.clientSecret === clientSecret
     );
@@ -64,7 +58,6 @@ app.post('/authenticate', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // vaid credentials pe post req krdi 
     const authResponse = await axios.post(`${API_BASE_URL}/auth`, {
       companyName,
       clientID,
@@ -76,7 +69,6 @@ app.post('/authenticate', async (req, res) => {
 
     const { access_token } = authResponse.data;
 
-    // Save the access token in the company's record
     company.accessToken = access_token;
 
     res.status(200).json({ access_token });
@@ -86,26 +78,21 @@ app.post('/authenticate', async (req, res) => {
   }
 });
 
-// API endpoint to fetch train schedules from John Doe Railway API
 app.get('/trains', async (req, res) => {
   try {
     const { companyName, clientID } = req.query;
 
-    // Find the company in the database
     const company = companies.find((c) => c.companyName === companyName && c.clientID === clientID);
 
     if (!company || !company.accessToken) {
       return res.status(401).json({ error: 'Invalid credentials or access token not available' });
     }
-
-    // Make a GET request to John Doe Railway API to fetch train schedules
     const trainsResponse = await axios.get(`${API_BASE_URL}/trains`, {
       headers: {
         Authorization: `Bearer ${company.accessToken}`,
       },
     });
 
-    // Process and sort the train schedules
     const trains = trainsResponse.data;
     const filteredTrains = filterAndSortTrains(trains);
 
@@ -116,18 +103,17 @@ app.get('/trains', async (req, res) => {
   }
 });
 
-// Function to filter and sort train schedules
 const filterAndSortTrains = (trains) => {
   const now = moment();
   const twelveHoursLater = moment().add(12, 'hours');
 
-  // Filter trains departing in the next 12 hours
+  //  next 12 hours
   const filteredTrains = trains.filter((train) => {
     const departureTime = moment(train.departureTime, 'HH:mm:ss');
     return departureTime.isAfter(now) && departureTime.isBefore(twelveHoursLater);
   });
 
-  // Sort the filtered trains based on price (ascending), tickets availability (descending), and departure time (after considering delays)
+  
   filteredTrains.sort((a, b) => {
     if (a.price.sleeper !== b.price.sleeper) {
       return a.price.sleeper - b.price.sleeper;
